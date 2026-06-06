@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎮 Gaming Zone - Minecraft Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a0a2e 30%, #0d1117 60%, #0a1628 100%);
+            display: flex; justify-content: center; align-items: center;
+            font-family: 'Orbitron', sans-serif; overflow: hidden; color: #fff;
+        }
+        .bg-particles {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 0;
+        }
+        .particle {
+            position: absolute; width: 4px; height: 4px;
+            background: #00ff88; border-radius: 50%;
+            animation: float 8s infinite ease-in-out; opacity: 0.6;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.6; } 90% { opacity: 0.6; }
+            100% { transform: translateY(-10vh) rotate(720deg); opacity: 0; }
+        }
+        .scanlines {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: repeating-linear-gradient(0deg, rgba(0,255,136,0.03) 0px, rgba(0,255,136,0.03) 1px, transparent 1px, transparent 4px);
+            pointer-events: none; z-index: 1;
+        }
+        .container {
+            position: relative; z-index: 2; width: 100%; max-width: 500px; padding: 20px;
+        }
+        .screen { display: none; animation: fadeIn 0.6s ease-out; }
+        .screen.active { display: block; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .card {
+            background: rgba(10,15,30,0.9); backdrop-filter: blur(10px);
+            border: 2px solid #00ff88; border-radius: 20px;
+            padding: 35px 25px; text-align: center;
+            box-shadow: 0 0 20px rgba(0,255,136,0.3), 0 0 60px rgba(0,255,136,0.1), inset 0 0 30px rgba(0,255,136,0.05);
+            position: relative; overflow: hidden;
+        }
+        .card::before {
+            content: ''; position: absolute; top: -2px; left: -2px; right: -2px; bottom: -2px;
+            background: linear-gradient(45deg, #00ff88, #00d4ff, #ff00ff, #00ff88);
+            border-radius: 22px; z-index: -1; opacity: 0; animation: borderGlow 3s infinite;
+        }
+        @keyframes borderGlow { 0%,100%{opacity:0} 50%{opacity:0.5} }
+        .title {
+            font-family: 'Press Start 2P', cursive; font-size: 1.3rem; color: #00ff88;
+            text-shadow: 0 0 10px rgba(0,255,136,0.8), 0 0 30px rgba(0,255,136,0.4);
+            margin-bottom: 10px; letter-spacing: 2px;
+        }
+        .subtitle { font-size: 0.8rem; color: #8b9bb4; margin-bottom: 25px; text-transform: uppercase; letter-spacing: 3px; }
+        .input-group { margin-bottom: 18px; position: relative; }
+        .input-group input {
+            width: 100%; padding: 14px 18px; background: rgba(0,255,136,0.05);
+            border: 2px solid rgba(0,255,136,0.3); border-radius: 12px; color: #fff;
+            font-family: 'Orbitron', sans-serif; font-size: 0.95rem; text-align: center;
+            outline: none; transition: all 0.3s;
+        }
+        .input-group input:focus {
+            border-color: #00ff88; box-shadow: 0 0 15px rgba(0,255,136,0.3);
+            background: rgba(0,255,136,0.1);
+        }
+        .input-group input::placeholder { color: #4a5568; font-size: 0.8rem; }
+        .input-group label {
+            display: block; text-align: left; color: #00ff88; font-size: 0.7rem;
+            text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px; padding-left: 5px;
+        }
+        .btn {
+            width: 100%; padding: 15px; background: linear-gradient(135deg, #00ff88, #00cc6a);
+            border: none; border-radius: 12px; color: #0a0a1a;
+            font-family: 'Press Start 2P', cursive; font-size: 0.75rem;
+            cursor: pointer; text-transform: uppercase; letter-spacing: 2px;
+            transition: all 0.3s; position: relative; overflow: hidden; margin-top: 8px;
+        }
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,255,136,0.4); }
+        .btn:active { transform: translateY(0); }
+        .btn::after {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: linear-gradient(to right, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
+            transform: rotate(45deg) translateX(-100%); transition: transform 0.6s;
+        }
+        .btn:hover::after { transform: rotate(45deg) translateX(100%); }
+        .btn-blue {
+            background: linear-gradient(135deg, #00d4ff, #0099cc); color: #fff;
+            font-family: 'Orbitron', sans-serif; font-weight: 700;
+        }
+        .btn-blue:hover { box-shadow: 0 10px 30px rgba(0,212,255,0.4); }
+        .btn-red {
+            background: linear-gradient(135deg, #ff3366, #cc0044); color: #fff;
+            font-family: 'Orbitron', sans-serif; font-weight: 700;
+        }
+        .btn-red:hover { box-shadow: 0 10px 30px rgba(255,51,102,0.4); }
+        .btn-gold {
+            background: linear-gradient(135deg, #ffd700, #ccaa00); color: #0a0a1a;
+            font-family: 'Press Start 2P', cursive; font-size: 0.7rem;
+        }
+        .btn-gold:hover { box-shadow: 0 10px 30px rgba(255,215,0,0.4); }
+        .error { color: #ff3366; font-size: 0.75rem; margin-top: 10px; text-shadow: 0 0 10px rgba(255,51,102,0.5); display: none; animation: shake 0.5s; }
+        .error.show { display: block; }
+        @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-10px)} 75%{transform:translateX(10px)} }
+        .icon { font-size: 2.8rem; margin-bottom: 12px; filter: drop-shadow(0 0 10px rgba(0,255,136,0.5)); animation: bounce 2s infinite; }
+        @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+        .welcome-title {
+            font-family: 'Press Start 2P', cursive; font-size: 1.4rem; color: #00ff88;
+            text-shadow: 0 0 20px rgba(0,255,136,0.8); margin-bottom: 15px; animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0%,100%{text-shadow:0 0 20px rgba(0,255,136,0.8)} 50%{text-shadow:0 0 30px rgba(0,255,136,1)} }
+        .welcome-text { font-size: 1.6rem; color: #00d4ff; font-weight: 900; text-shadow: 0 0 15px rgba(0,212,255,0.6); margin: 15px 0; font-family: 'Press Start 2P', cursive; line-height: 1.5; }
+        .player-info { background: rgba(0,255,136,0.1); border: 1px solid rgba(0,255,136,0.3); border-radius: 12px; padding: 12px; margin: 15px 0; }
+        .player-info p { color: #8b9bb4; font-size: 0.8rem; margin: 4px 0; }
+        .player-info span { color: #00ff88; font-weight: 700; }
+        .minecraft-blocks { display: flex; justify-content: center; gap: 8px; margin: 20px 0; }
+        .block { width: 35px; height: 35px; border-radius: 5px; animation: blockFloat 2s infinite ease-in-out; }
+        .block:nth-child(1){background:#5D8C2A;animation-delay:0s}
+        .block:nth-child(2){background:#8B6914;animation-delay:0.2s}
+        .block:nth-child(3){background:#6B8E9F;animation-delay:0.4s}
+        .block:nth-child(4){background:#B87333;animation-delay:0.6s}
+        .block:nth-child(5){background:#808080;animation-delay:0.8s}
+        @keyframes blockFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+        .creeper { font-size: 3.5rem; margin: 10px 0; filter: drop-shadow(0 0 15px rgba(0,255,136,0.6)); animation: creeperBounce 1.5s infinite; }
+        @keyframes creeperBounce { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
+        /* Lista usuarios */
+        .users-list { max-height: 280px; overflow-y: auto; margin: 15px 0; text-align: left; }
+        .users-list::-webkit-scrollbar { width: 6px; }
+        .users-list::-webkit-scrollbar-thumb { background: #00ff88; border-radius: 3px; }
+        .user-item {
+            background: rgba(0,255,136,0.08); border: 1px solid rgba(0,255,136,0.2);
+            border-radius: 10px; padding: 10px 14px; margin-bottom: 8px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .user-item .u-name { color: #00ff88; font-weight: 700; font-size: 0.85rem; }
+        .user-item .u-date { color: #8b9bb4; font-size: 0.75rem; }
+        .user-item .u-badge {
+            background: linear-gradient(135deg, #ff3366, #cc0044); color: #fff;
+            font-size: 0.6rem; padding: 3px 8px; border-radius: 20px;
+            font-family: 'Press Start 2P', cursive;
+        }
+        .empty-msg { color: #4a5568; font-size: 0.85rem; padding: 20px; }
+        /* Canvas juego */
+        .game-wrapper { position: relative; margin: 0 auto; border-radius: 16px; overflow: hidden; border: 3px solid #00ff88; box-shadow: 0 0 30px rgba(0,255,136,0.3); max-width: 100%; }
+        #gameCanvas { display: block; background: #87CEEB; width: 100%; max-width: 400px; height: auto; aspect-ratio: 2/3; }
+        .game-ui { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; pointer-events: none; }
+        .game-ui .score-box {
+            background: rgba(0,0,0,0.6); border: 2px solid #ffd700; border-radius: 8px;
+            padding: 6px 12px; color: #ffd700; font-family: 'Press Start 2P', cursive; font-size: 0.7rem;
+        }
+        .game-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            background: rgba(0,0,0,0.7); pointer-events: none;
+        }
+        .game-overlay.hidden { display: none; }
+        .game-over-title { font-family: 'Press Start 2P', cursive; color: #ff3366; font-size: 1.1rem; text-shadow: 0 0 15px rgba(255,51,102,0.8); margin-bottom: 15px; text-align: center; line-height: 1.6; }
+        .game-over-sub { font-family: 'Press Start 2P', cursive; color: #00ff88; font-size: 1rem; text-shadow: 0 0 15px rgba(0,255,136,0.8); margin-bottom: 15px; text-align: center; line-height: 1.5; }
+        .final-score { color: #ffd700; font-family: 'Press Start 2P', cursive; font-size: 0.85rem; margin-bottom: 20px; }
+        .tap-hint { color: #8b9bb4; font-size: 0.7rem; margin-top: 10px; animation: blink 1s infinite; }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+        .btn-row { display: flex; gap: 10px; margin-top: 10px; }
+        .btn-row .btn { flex: 1; }
+        @media (max-width: 480px) {
+            .card { padding: 25px 18px; }
+            .title { font-size: 1rem; }
+            .welcome-title { font-size: 1rem; }
+            .welcome-text { font-size: 1.1rem; }
+            .btn { font-size: 0.65rem; padding: 12px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-particles" id="particles"></div>
+    <div class="scanlines"></div>
+
+    <div class="container">
+        <!-- PANTALLA 1: CÓDIGO -->
+        <div class="screen active" id="screen-code">
+            <div class="card">
+                <div class="icon">🔒</div>
+                <h1 class="title">ACCESO VIP</h1>
+                <p class="subtitle">Introduce el código secreto</p>
+                <div class="input-group">
+                    <input type="password" id="codeInput" placeholder="••••" maxlength="10" autocomplete="off">
+                </div>
+                <button class="btn" onclick="checkCode()">ENTRAR →</button>
+                <p class="error" id="codeError">❌ Código incorrecto. Inténtalo de nuevo.</p>
+            </div>
+        </div>
+
+        <!-- PANTALLA 2: REGISTRO -->
+        <div class="screen" id="screen-register">
+            <div class="card">
+                <div class="icon">📝</div>
+                <h1 class="title">REGISTRO</h1>
+                <p class="subtitle">Crea tu perfil de jugador</p>
+                <div class="input-group">
+                    <label>Nombre de jugador</label>
+                    <input type="text" id="nameInput" placeholder="Tu nombre" maxlength="20">
+                </div>
+                <div class="input-group">
+                    <label>Fecha de nacimiento</label>
+                    <input type="date" id="dateInput">
+                </div>
+                <button class="btn" onclick="register()">REGISTRARME ✅</button>
+                <p class="error" id="registerError">❌ Completa todos los campos.</p>
+            </div>
+        </div>
+
+        <!-- PANTALLA 3: BIENVENIDA -->
+        <div class="screen" id="screen-welcome">
+            <div class="card">
+                <div class="creeper">🟩</div>
+                <h1 class="welcome-title">¡BIENVENIDO!</h1>
+                <div class="minecraft-blocks">
+                    <div class="block"></div><div class="block"></div><div class="block"></div><div class="block"></div><div class="block"></div>
+                </div>
+                <div class="player-info">
+                    <p>Jugador: <span id="playerName">---</span></p>
+                    <p>Fecha: <span id="playerDate">---</span></p>
+                </div>
+                <button class="btn btn-gold" onclick="startGame()">🎮 JUGAR</button>
+                <button class="btn btn-blue" id="btnUsers" style="display:none; margin-top:10px;" onclick="showUsers()">👥 USUARIOS REGISTRADOS</button>
+            </div>
+        </div>
+
+        <!-- PANTALLA 4: USUARIOS REGISTRADOS (ADMIN) -->
+        <div class="screen" id="screen-users">
+            <div class="card" style="padding: 25px 20px;">
+                <div class="icon">📋</div>
+                <h1 class="title" style="font-size:1rem;">USUARIOS REGISTRADOS</h1>
+                <p class="subtitle">Panel de administrador</p>
+                <div class="users-list" id="usersList"></div>
+                <button class="btn btn-blue" onclick="showScreen('screen-welcome')">← VOLVER</button>
+            </div>
+        </div>
+
+        <!-- PANTALLA 5: JUEGO -->
+        <div class="screen" id="screen-game">
+            <div class="game-wrapper">
+                <canvas id="gameCanvas" width="400" height="600"></canvas>
+                <div class="game-ui">
+                    <div class="score-box">🪙 <span id="coinDisplay">0</span></div>
+                    <div class="score-box">🏆 <span id="scoreDisplay">0</span></div>
+                </div>
+                <div class="game-overlay" id="startOverlay">
+                    <div style="font-family:'Press Start 2P';color:#fff;font-size:0.9rem;text-align:center;margin-bottom:10px;">TOCA PARA<br>EMPEZAR</div>
+                    <div class="tap-hint">Click o Espacio para saltar</div>
+                </div>
+            </div>
+            <button class="btn btn-red" style="margin-top:15px;" onclick="exitGame()">✕ SALIR DEL JUEGO</button>
+        </div>
+
+        <!-- PANTALLA 6: GAME OVER -->
+        <div class="screen" id="screen-gameover">
+            <div class="card">
+                <div class="icon">💀</div>
+                <div class="game-over-title">¡GAME OVER!</div>
+                <div class="game-over-sub">¡JUGAMOS<br>MINECRAFT!</div>
+                <div class="final-score">🪙 Monedas: <span id="finalCoins">0</span></div>
+                <div class="final-score">🏆 Puntos: <span id="finalScore">0</span></div>
+                <div class="btn-row">
+                    <button class="btn btn-gold" onclick="startGame()">↻ REINTENTAR</button>
+                    <button class="btn" onclick="showScreen('screen-welcome')">🏠 MENÚ</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== PARTICULAS =====
+        const particlesContainer = document.getElementById('particles');
+        for (let i = 0; i < 30; i++) {
+            const p = document.createElement('div');
+            p.className = 'particle';
+            p.style.left = Math.random() * 100 + '%';
+            p.style.animationDelay = Math.random() * 8 + 's';
+            p.style.animationDuration = (5 + Math.random() * 5) + 's';
+            const colors = ['#00ff88', '#00d4ff', '#ff00ff', '#ffff00'];
+            p.style.background = colors[Math.floor(Math.random() * colors.length)];
+            particlesContainer.appendChild(p);
+        }
+
+        // ===== LOCALSTORAGE USUARIOS =====
+        const STORAGE_KEY = 'mc_gaming_users';
+        let currentUser = null;
+        let isAdmin = false;
+
+        function getUsers() {
+            try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch(e) { return []; }
+        }
+        function saveUsers(users) { localStorage.setItem(STORAGE_KEY, JSON.stringify(users)); }
+
+        // Pre-registrar admin si no existe
+        function initAdmin() {
+            let users = getUsers();
+            const adminExists = users.some(u => u.name === 'diego67');
+            if (!adminExists) {
+                users.unshift({ name: 'diego67', date: '2000-02-12', isAdmin: true });
+                saveUsers(users);
+            }
+        }
+        initAdmin();
+
+        // ===== NAVEGACIÓN =====
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        // ===== PANTALLA CÓDIGO =====
+        function checkCode() {
+            const code = document.getElementById('codeInput').value;
+            const error = document.getElementById('codeError');
+            if (code === '1467') {
+                error.classList.remove('show');
+                document.getElementById('codeInput').value = '';
+                showScreen('screen-register');
+            } else {
+                error.classList.add('show');
+                document.getElementById('codeInput').value = '';
+                document.getElementById('codeInput').focus();
+            }
+        }
+        document.getElementById('codeInput').addEventListener('keypress', e => { if(e.key==='Enter') checkCode(); });
+
+        // ===== REGISTRO =====
+        function register() {
+            const name = document.getElementById('nameInput').value.trim();
+            const date = document.getElementById('dateInput').value;
+            const error = document.getElementById('registerError');
+            if (!name || !date) { error.classList.add('show'); return; }
+            error.classList.remove('show');
+
+            let users = getUsers();
+            if (!users.some(u => u.name === name)) {
+                users.push({ name, date });
+                saveUsers(users);
+            }
+
+            currentUser = { name, date };
+            isAdmin = (name === 'diego67' && date === '2000-02-12');
+
+            document.getElementById('playerName').textContent = name;
+            document.getElementById('playerDate').textContent = new Date(date).toLocaleDateString('es-ES');
+            document.getElementById('btnUsers').style.display = isAdmin ? 'block' : 'none';
+
+            document.getElementById('nameInput').value = '';
+            document.getElementById('dateInput').value = '';
+            showScreen('screen-welcome');
+        }
+
+        // ===== PANEL USUARIOS (ADMIN) =====
+        function showUsers() {
+            const list = document.getElementById('usersList');
+            const users = getUsers();
+            if (users.length === 0) {
+                list.innerHTML = '<div class="empty-msg">No hay usuarios registrados</div>';
+            } else {
+                list.innerHTML = users.map((u, i) => `
+                    <div class="user-item">
+                        <div>
+                            <div class="u-name">${escapeHtml(u.name)}</div>
+                            <div class="u-date">${new Date(u.date).toLocaleDateString('es-ES')}</div>
+                        </div>
+                        ${u.isAdmin || u.name === 'diego67' ? '<div class="u-badge">ADMIN</div>' : `<div class="u-date">#${i+1}</div>`}
+                    </div>
+                `).join('');
+            }
+            showScreen('screen-users');
+        }
+        function escapeHtml(text) {
+            const d = document.createElement('div'); d.textContent = text; return d.innerHTML;
+        }
+
+        // ===== JUEGO FLAPPY BIRD MINECRAFT =====
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let gameLoop, gameActive = false, gameStarted = false;
+        let coins = 0, score = 0;
+
+        const bird = { x: 60, y: 250, w: 34, h: 34, vy: 0, jump: -7, gravity: 0.45 };
+        let pipes = [], coinItems = [], clouds = [], frame = 0, pipeTimer = 0;
+
+        function initClouds() {
+            clouds = [];
+            for (let i = 0; i < 5; i++) {
+                clouds.push({ x: Math.random() * 400, y: 30 + Math.random() * 120, w: 60 + Math.random() * 40, s: 0.2 + Math.random() * 0.3 });
+            }
+        }
+        initClouds();
+
+        function resetGame() {
+            bird.y = 250; bird.vy = 0;
+            pipes = []; coinItems = []; frame = 0; pipeTimer = 0;
+            coins = 0; score = 0;
+            gameActive = false; gameStarted = false;
+            document.getElementById('coinDisplay').textContent = '0';
+            document.getElementById('scoreDisplay').textContent = '0';
+            document.getElementById('startOverlay').classList.remove('hidden');
+            draw();
+        }
+
+        function startGame() {
+            showScreen('screen-game');
+            resetGame();
+            setTimeout(() => {
+                canvas.focus();
+                draw();
+            }, 100);
+        }
+
+        function exitGame() {
+            gameActive = false; gameStarted = false;
+            cancelAnimationFrame(gameLoop);
+            showScreen('screen-welcome');
+        }
+
+        function jump() {
+            if (!gameStarted) {
+                gameStarted = true; gameActive = true;
+                document.getElementById('startOverlay').classList.add('hidden');
+                loop();
+                return;
+            }
+            if (gameActive) bird.vy = bird.jump;
+        }
+
+        canvas.addEventListener('mousedown', jump);
+        canvas.addEventListener('touchstart', e => { e.preventDefault(); jump(); });
+        document.addEventListener('keydown', e => { if (e.code === 'Space' && document.getElementById('screen-game').classList.contains('active')) { e.preventDefault(); jump(); } });
+
+        function drawCreeper(x, y, s) {
+            // Cuerpo verde
+            ctx.fillStyle = '#5D8C2A';
+            ctx.fillRect(x, y, 34 * s, 34 * s);
+            // Borde oscuro
+            ctx.strokeStyle = '#3a5c1a';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x, y, 34 * s, 34 * s);
+            // Cara pixelada
+            ctx.fillStyle = '#0f1f0a';
+            // Ojos
+            ctx.fillRect(x + 6 * s, y + 8 * s, 6 * s, 6 * s);
+            ctx.fillRect(x + 22 * s, y + 8 * s, 6 * s, 6 * s);
+            // Boca / nariz
+            ctx.fillRect(x + 10 * s, y + 18 * s, 14 * s, 4 * s);
+            ctx.fillRect(x + 6 * s, y + 22 * s, 6 * s, 4 * s);
+            ctx.fillRect(x + 22 * s, y + 22 * s, 6 * s, 4 * s);
+        }
+
+        function drawPipe(p) {
+            const grass = '#5D8C2A', dirt = '#8B6914', dark = '#5a4a0f', stone = '#808080';
+            ctx.fillStyle = p.top ? grass : stone;
+            ctx.fillRect(p.x, p.y, p.w, p.h);
+            ctx.strokeStyle = dark; ctx.lineWidth = 2;
+            ctx.strokeRect(p.x, p.y, p.w, p.h);
+            // Detalle de tierra/piedra
+            ctx.fillStyle = p.top ? dirt : '#666';
+            for (let i = 0; i < p.h; i += 20) {
+                ctx.fillRect(p.x + 4, p.y + i + 4, 8, 8);
+                ctx.fillRect(p.x + p.w - 14, p.y + i + 14, 6, 6);
+            }
+            // Borde superior del tubo
+            ctx.fillStyle = p.top ? '#6ba832' : '#999';
+            ctx.fillRect(p.x - 4, p.y + (p.top ? p.h - 20 : 0), p.w + 8, 20);
+            ctx.strokeRect(p.x - 4, p.y + (p.top ? p.h - 20 : 0), p.w + 8, 20);
+        }
+
+        function drawCoin(c) {
+            ctx.beginPath();
+            ctx.arc(c.x, c.y, 10, 0, Math.PI * 2);
+            ctx.fillStyle = '#FFD700';
+            ctx.fill();
+            ctx.strokeStyle = '#CCAA00'; ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.fillStyle = '#B8860B';
+            ctx.font = 'bold 11px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('$', c.x, c.y + 4);
+            // Brillo
+            ctx.beginPath();
+            ctx.arc(c.x - 3, c.y - 3, 3, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255,255,255,0.6)';
+            ctx.fill();
+        }
+
+        function drawCloud(c) {
+            ctx.fillStyle = 'rgba(255,255,255,0.8)';
+            ctx.fillRect(c.x, c.y, c.w, c.w * 0.4);
+            ctx.fillRect(c.x + c.w * 0.2, c.y - c.w * 0.15, c.w * 0.6, c.w * 0.35);
+        }
+
+        function draw() {
+            // Fondo cielo
+            ctx.fillStyle = '#87CEEB';
+            ctx.fillRect(0, 0, 400, 600);
+            // Nubes
+            clouds.forEach(c => drawCloud(c));
+            // Suelo
+            ctx.fillStyle = '#5D8C2A';
+            ctx.fillRect(0, 560, 400, 40);
+            ctx.fillStyle = '#8B6914';
+            ctx.fillRect(0, 570, 400, 30);
+            ctx.strokeStyle = '#3a5c1a'; ctx.lineWidth = 2;
+            ctx.strokeRect(0, 560, 400, 40);
+            // Pipes
+            pipes.forEach(p => drawPipe(p));
+            // Monedas
+            coinItems.forEach(c => drawCoin(c));
+            // Creeper
+            drawCreeper(bird.x, bird.y, 1);
+        }
+
+        function loop() {
+            if (!gameActive) return;
+            frame++;
+
+            // Gravedad
+            bird.vy += bird.gravity;
+            bird.y += bird.vy;
+
+            // Suelo y techo
+            if (bird.y + bird.h > 560) { gameOver(); return; }
+            if (bird.y < 0) { bird.y = 0; bird.vy = 0; }
+
+            // Nubes
+            clouds.forEach(c => { c.x -= c.s; if (c.x + c.w < 0) c.x = 420; });
+
+            // Generar pipes
+            pipeTimer++;
+            if (pipeTimer > 110) {
+                pipeTimer = 0;
+                const gap = 140;
+                const minH = 60;
+                const maxH = 350;
+                const topH = minH + Math.random() * (maxH - minH);
+                const bottomY = topH + gap;
+                const w = 50;
+                pipes.push({ x: 420, y: 0, w, h: topH, top: true });
+                pipes.push({ x: 420, y: bottomY, w, h: 600 - bottomY, top: false });
+                // Moneda en el gap
+                coinItems.push({ x: 420 + 25, y: topH + gap / 2, collected: false });
+                score++;
+                document.getElementById('scoreDisplay').textContent = score;
+            }
+
+            // Mover pipes y monedas
+            pipes.forEach(p => p.x -= 2.5);
+            coinItems.forEach(c => c.x -= 2.5);
+
+            // Colisiones pipes
+            for (let p of pipes) {
+                if (bird.x < p.x + p.w && bird.x + bird.w > p.x && bird.y < p.y + p.h && bird.y + bird.h > p.y) {
+                    gameOver(); return;
+                }
+            }
+
+            // Colisiones monedas
+            coinItems.forEach(c => {
+                if (!c.collected) {
+                    const dx = (bird.x + bird.w / 2) - c.x;
+                    const dy = (bird.y + bird.h / 2) - c.y;
+                    if (Math.sqrt(dx * dx + dy * dy) < 22) {
+                        c.collected = true;
+                        coins++;
+                        document.getElementById('coinDisplay').textContent = coins;
+                    }
+                }
+            });
+
+            // Limpiar fuera de pantalla
+            pipes = pipes.filter(p => p.x + p.w > -20);
+            coinItems = coinItems.filter(c => c.x > -20 && !c.collected);
+
+            draw();
+            gameLoop = requestAnimationFrame(loop);
+        }
+
+        function gameOver() {
+            gameActive = false;
+            cancelAnimationFrame(gameLoop);
+            document.getElementById('finalCoins').textContent = coins;
+            document.getElementById('finalScore').textContent = score;
+            showScreen('screen-gameover');
+        }
+
+        // Inicializar dibujo estático
+        resetGame();
+    </script>
+</body>
+</html>
